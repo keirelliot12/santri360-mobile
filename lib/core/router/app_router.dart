@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/academic/academic_pages.dart';
 import '../../features/academic/academic_routes.dart';
+import '../../features/announcement/announcement_routes.dart';
 import '../../features/auth/auth_controller.dart';
+import '../../features/finance/finance_routes.dart';
+import '../../features/finance/keuangan_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/kesantrian/kesantrian_routes.dart';
@@ -39,7 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => HomeShell(shell: shell),
         branches: [
           _branch('/', const HomePage()),
-          _branch('/keuangan', const ComingSoonPage(title: 'Keuangan')),
+          _branch('/keuangan', const KeuanganPage()),
           _branch('/akademik', const AkademikPage()),
           _branch('/notifikasi', const ComingSoonPage(title: 'Notifikasi')),
           _branch('/akun', const ProfilePage()),
@@ -47,13 +50,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       ...academicRoutes,
       ...kesantrianRoutes,
+      ...announcementRoutes(),
+      ...financeRoutes(),
       GoRoute(
         path: '/:section/:feature',
         builder: (_, s) => ComingSoonPage(title: s.pathParameters['feature']!),
-      ),
-      GoRoute(
-        path: '/pengumuman',
-        builder: (_, _) => const ComingSoonPage(title: 'Pengumuman'),
       ),
     ],
   );
