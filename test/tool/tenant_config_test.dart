@@ -46,6 +46,15 @@ void main() {
     });
   });
 
+  test('APP_NAME berisi // atau \$ ditolak (rusak di xcconfig)', () {
+    for (final name in ['Ponpes A//B', r'Ponpes $(HOME)']) {
+      expect(
+        validateConfig('demo', _cfg({'APP_NAME': name})),
+        contains('APP_NAME tidak boleh berisi "//" atau "\$"'),
+      );
+    }
+  });
+
   group('loadTenants', () {
     late Directory root;
     setUp(() => root = Directory.systemTemp.createTempSync('tenants'));

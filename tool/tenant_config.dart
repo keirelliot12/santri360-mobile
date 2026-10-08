@@ -48,6 +48,10 @@ List<String> validateConfig(String slug, Map<String, dynamic> json) {
   if (appName.isEmpty || appName.length > 30) {
     errors.add('APP_NAME 1–30 karakter (batas label launcher)');
   }
+  // xcconfig: `//` = komentar (nama terpotong), `$` = ekspansi variabel.
+  if (appName.contains('//') || appName.contains(r'$')) {
+    errors.add('APP_NAME tidak boleh berisi "//" atau "\$"');
+  }
   if (!_appId.hasMatch(json['APP_ID'] as String)) {
     errors.add(
       'APP_ID harus reverse-domain huruf kecil, mis. id.santri360.$slug',
