@@ -28,6 +28,17 @@ jobs:
       matrix: ${{ steps.list.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+      # versionName di Play diambil dari pubspec; tag harus sama agar tidak menyesatkan.
+      - name: Cek tag = versi pubspec
+        if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          ver=$(grep -E '^version:' pubspec.yaml | sed -E 's/version: *([^+]+).*//')
+          if [ "$TAG" != "v$ver" ]; then
+            echo "::error::Tag $TAG tidak sama dengan versi pubspec v$ver. Naikkan 'version:' di pubspec.yaml dulu."
+            exit 1
+          fi
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}

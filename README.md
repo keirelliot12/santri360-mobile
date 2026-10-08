@@ -24,10 +24,11 @@ flutter test && flutter analyze
 
 ### Tambah tenant baru
 1. `tenants/<slug>/config.json` (+ ikon), `dart run tool/tenant.dart validate`.
-2. Buat GitHub Environment bernama `<slug>` (Settings → Environments), aktifkan *required reviewers*, isi secret:
+2. **Sebelum rilis pertama**, buat GitHub Environment bernama `<slug>` (Settings → Environments) dan aktifkan *required reviewers*.
+   Jika tidak, workflow rilis membuatnya otomatis **tanpa proteksi** (build tetap gagal karena secret kosong). Isi secret:
    `ANDROID_KEYSTORE_BASE64` (`base64 -w0 upload.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
    Upload key **per tenant** (tiap app punya listing Play sendiri); aktifkan Play App Signing.
-3. Rilis: push tag `vX.Y.Z` (semua tenant) atau *Actions → Release Android → Run workflow* (satu tenant).
+3. Rilis: naikkan `version:` di `pubspec.yaml`, lalu push tag `vX.Y.Z` yang **sama** (workflow gagal bila beda) untuk semua tenant, atau *Actions → Release Android → Run workflow* (satu tenant).
 
 ## CI/CD
 - `ci.yml` (PR & main): format, analyze, validasi tenant, test → smoke build APK `demo` + cek `applicationId`; iOS `--no-codesign` hanya di main.
