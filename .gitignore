@@ -46,3 +46,12 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# White-label: hasil tool/tenant.dart apply
+/ios/Flutter/Tenant.xcconfig
+
+# Signing — jangan pernah commit
+*.jks
+*.keystore
+/android/key.properties
+/android/build/
