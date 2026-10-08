@@ -7,6 +7,7 @@ import '../../features/academic/academic_routes.dart';
 import '../../features/auth/auth_controller.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/home/home_page.dart';
+import '../../features/kesantrian/kesantrian_routes.dart';
 import '../../features/profile/profile_page.dart';
 
 /// Rute fitur (F1+) didaftarkan di sini. Rute yang belum dibangun → [ComingSoonPage].
@@ -45,6 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       ...academicRoutes,
+      ...kesantrianRoutes,
       GoRoute(
         path: '/:section/:feature',
         builder: (_, s) => ComingSoonPage(title: s.pathParameters['feature']!),
