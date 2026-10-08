@@ -1,0 +1,108 @@
+name: Release Android
+# Build AAB rilis per tenant. Secret signing disimpan di GitHub Environment
+# bernama sama dengan slug tenant (lihat README "Rilis per tenant").
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description: Slug tenant (kosong = semua)
+        required: false
+        default: ''
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  tenants:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - id: list
+        env:
+          ONLY: ${{ inputs.tenant }}
+        run: |
+          # grep: buang log "Running build hooks..." yang ikut di stdout `dart run`.
+          all=$(dart run tool/tenant.dart list --json | grep -o '\[.*\]')
+          if [ -n "$ONLY" ]; then
+            echo "$all" | jq -e --arg t "$ONLY" 'index($t)' >/dev/null || { echo "Tenant '$ONLY' tidak ada"; exit 1; }
+            all=$(jq -cn --arg t "$ONLY" '[$t]')
+          fi
+          echo "matrix=$all" >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: tenants
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant: ${{ fromJson(needs.tenants.outputs.matrix) }}
+    environment: ${{ matrix.tenant }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/tenant.dart apply "$TENANT"
+        env:
+          TENANT: ${{ matrix.tenant }}
+      - name: Siapkan upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Secret ANDROID_KEYSTORE_BASE64 belum diisi di environment '${{ matrix.tenant }}'"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build AAB
+        env:
+          TENANT: ${{ matrix.tenant }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build appbundle --release \
+            --dart-define-from-file="tenants/$TENANT/config.json" \
+            --build-number="${{ github.run_number }}" \
+            --obfuscate --split-debug-info="build/symbols"
+      - name: Hapus keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.tenant }}-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+      # Simbol untuk de-obfuscate stack trace (Sentry/Play Console). Simpan, jangan dibuang.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.tenant }}-symbols
+          path: |
+            build/symbols
+            build/app/outputs/mapping/release
+          retention-days: 90

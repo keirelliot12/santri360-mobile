@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+
+// Default; ditimpa oleh Tenant.xcconfig hasil `dart run tool/tenant.dart apply <slug>`.
+APP_BUNDLE_ID=id.santri360.santri360
+APP_DISPLAY_NAME=Santri360
+#include? "Tenant.xcconfig"
