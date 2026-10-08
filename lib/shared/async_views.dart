@@ -9,6 +9,9 @@ String friendlyError(Object e) {
       return 'Fitur ini belum aktif untuk pesantren Anda. '
           'Silakan hubungi pihak pesantren.';
     }
+    if (e.statusCode == 503) {
+      return 'Layanan keuangan sedang gangguan, coba lagi';
+    }
     return e.message;
   }
   return 'Terjadi kesalahan. Silakan coba lagi.';
