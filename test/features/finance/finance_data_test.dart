@@ -224,13 +224,12 @@ void main() {
     });
 
     test('wallet + transactions: path/query month', () async {
-      when(
-        () => dio.get<Map<String, dynamic>>('/children/7/wallet'),
-      ).thenAnswer(
-        (_) async => _res({
-          'data': {'santri_id': 7, 'saldo': 1000},
-        }),
-      );
+      when(() => dio.get<Map<String, dynamic>>('/children/7/wallet'))
+          .thenAnswer(
+            (_) async => _res({
+              'data': {'santri_id': 7, 'saldo': 1000},
+            }),
+          );
       expect((await repo.wallet(7)).saldo, 1000);
 
       when(
@@ -329,7 +328,11 @@ void main() {
         expect(fields['sender_name'], 'Budi');
         expect(fields['sender_bank'], 'BCA');
         expect(fields['destination_account_id'], 'a1');
-        expect(fields.containsKey('note'), isFalse, reason: 'kosong tak dikirim');
+        expect(
+          fields.containsKey('note'),
+          isFalse,
+          reason: 'kosong tak dikirim',
+        );
         expect(form.files.single.key, 'proof');
         expect(form.files.single.value.filename, 'f2a_proof_test.jpg');
         expect(opts.single.headers!['Idempotency-Key'], 'key-1');
