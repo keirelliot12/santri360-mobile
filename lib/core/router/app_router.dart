@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/announcement/announcement_routes.dart';
 import '../../features/auth/auth_controller.dart';
+import '../../features/finance/finance_routes.dart';
+import '../../features/finance/keuangan_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/profile/profile_page.dart';
@@ -36,19 +39,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => HomeShell(shell: shell),
         branches: [
           _branch('/', const HomePage()),
-          _branch('/keuangan', const ComingSoonPage(title: 'Keuangan')),
+          _branch('/keuangan', const KeuanganPage()),
           _branch('/akademik', const ComingSoonPage(title: 'Akademik')),
           _branch('/notifikasi', const ComingSoonPage(title: 'Notifikasi')),
           _branch('/akun', const ProfilePage()),
         ],
       ),
+      ...announcementRoutes(),
+      ...financeRoutes(),
       GoRoute(
         path: '/:section/:feature',
         builder: (_, s) => ComingSoonPage(title: s.pathParameters['feature']!),
-      ),
-      GoRoute(
-        path: '/pengumuman',
-        builder: (_, _) => const ComingSoonPage(title: 'Pengumuman'),
       ),
     ],
   );
