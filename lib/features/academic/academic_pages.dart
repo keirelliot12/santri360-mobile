@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,10 +16,11 @@ typedef PdfOpener = Future<void> Function(List<int> bytes, String name);
 
 final pdfOpenerProvider = Provider<PdfOpener>(
   (_) => (bytes, name) async {
-    final file = File('${Directory.systemTemp.path}/$name');
+    // Cache app (bukan storage publik); dibuka via FileProvider — aman Android 7+.
+    final file = File('${(await getTemporaryDirectory()).path}/$name');
     await file.writeAsBytes(bytes, flush: true);
-    final ok = await launchUrl(Uri.file(file.path));
-    if (!ok) throw StateError('tidak ada aplikasi PDF');
+    final r = await OpenFilex.open(file.path, type: 'application/pdf');
+    if (r.type != ResultType.done) throw StateError(r.message);
   },
 );
 
