@@ -5,6 +5,7 @@ class Paginated<T> {
     required this.currentPage,
     required this.lastPage,
     required this.total,
+    this.meta = const {},
   });
 
   factory Paginated.fromEnvelope(
@@ -18,6 +19,7 @@ class Paginated<T> {
       currentPage: (meta['current_page'] as num?)?.toInt() ?? 1,
       lastPage: (meta['last_page'] as num?)?.toInt() ?? 1,
       total: (meta['total'] as num?)?.toInt() ?? data.length,
+      meta: meta,
     );
   }
 
@@ -25,6 +27,9 @@ class Paginated<T> {
   final int currentPage;
   final int lastPage;
   final int total;
+
+  /// `meta` mentah dari envelope (mis. `total_outstanding`).
+  final Map<String, dynamic> meta;
 
   bool get hasMore => currentPage < lastPage;
 }

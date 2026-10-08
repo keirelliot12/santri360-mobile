@@ -29,7 +29,7 @@ const quickMenus = [
   QuickMenu('Pelanggaran', Icons.gavel, '/kesantrian/pelanggaran'),
   QuickMenu('Kesehatan', Icons.healing, '/kesantrian/kesehatan'),
   QuickMenu(
-    'Tabungan',
+    'Uang Saku',
     Icons.savings,
     '/keuangan/tabungan',
     module: 'keuangan',

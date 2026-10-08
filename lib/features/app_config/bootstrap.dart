@@ -24,11 +24,37 @@ class PesantrenContact {
   final String whatsapp;
 }
 
+/// Rekening tujuan transfer pesantren (`Bootstrap.payment_accounts`).
+class PaymentAccount {
+  const PaymentAccount({
+    required this.id,
+    required this.bank,
+    required this.accountNumber,
+    required this.accountName,
+    this.note,
+  });
+
+  factory PaymentAccount.fromJson(Map<String, dynamic> j) => PaymentAccount(
+    id: '${j['id']}',
+    bank: j['bank'] as String? ?? '',
+    accountNumber: j['account_number'] as String? ?? '',
+    accountName: j['account_name'] as String? ?? '',
+    note: j['note'] as String?,
+  );
+
+  final String id;
+  final String bank;
+  final String accountNumber;
+  final String accountName;
+  final String? note;
+}
+
 class AppBootstrap {
   const AppBootstrap({
     required this.tenantName,
     required this.activeModules,
     required this.contacts,
+    this.paymentAccounts = const [],
   });
 
   factory AppBootstrap.fromJson(Map<String, dynamic> j) {
@@ -45,6 +71,10 @@ class AppBootstrap {
           .cast<Map<String, dynamic>>()
           .map(PesantrenContact.fromJson)
           .toList(),
+      paymentAccounts: (j['payment_accounts'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(PaymentAccount.fromJson)
+          .toList(),
     );
   }
 
@@ -54,6 +84,7 @@ class AppBootstrap {
   /// UI menyembunyikan menu modul non-aktif; backend tetap otoritatif (403).
   final Set<String> activeModules;
   final List<PesantrenContact> contacts;
+  final List<PaymentAccount> paymentAccounts;
 
   bool has(String module) => activeModules.contains(module);
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -43,12 +44,16 @@ class Santri360App extends ConsumerWidget {
     if (gate != null && gate.blocking) {
       return MaterialApp(
         title: config.appName,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('id', 'ID'), Locale('en')],
         theme: buildTheme(config.primaryColor, Brightness.light),
         home: GatePage(gate: gate),
       );
     }
     return MaterialApp.router(
       title: config.appName,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('id', 'ID'), Locale('en')],
       debugShowCheckedModeBanner: false,
       theme: buildTheme(config.primaryColor, Brightness.light),
       darkTheme: buildTheme(config.primaryColor, Brightness.dark),
