@@ -1,0 +1,8 @@
+{
+  "TENANT_CODE": "DEMO",
+  "APP_NAME": "Santri360 Demo",
+  "APP_ID": "id.santri360.demo",
+  "API_BASE_URL": "https://api.santri360.com",
+  "PRIMARY_COLOR": "0xFF0F766E",
+  "SENTRY_DSN": ""
+}
