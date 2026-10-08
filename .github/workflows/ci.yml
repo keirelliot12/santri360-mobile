@@ -1,15 +1,70 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
-      - run: dart format --set-exit-if-changed lib test
+      - run: dart format --set-exit-if-changed lib test tool
       - run: flutter analyze
+      - run: dart run tool/tenant.dart validate
       - run: flutter test
+
+  # Smoke build: memastikan Gradle + white-label (dart-defines → applicationId) tetap jalan.
+  android:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --debug --dart-define-from-file=tenants/demo/config.json
+      - name: Cek applicationId tenant
+        run: |
+          aapt=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)
+          "$aapt" dump badging build/app/outputs/flutter-apk/app-debug.apk | grep -q "package: name='id.santri360.demo'"
+
+  # iOS hanya di main (runner macOS mahal).
+  ios:
+    if: github.event_name == 'push'
+    needs: quality
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/tenant.dart apply demo
+      - run: flutter build ios --debug --no-codesign --dart-define-from-file=tenants/demo/config.json

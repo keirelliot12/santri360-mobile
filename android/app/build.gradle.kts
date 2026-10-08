@@ -1,13 +1,39 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// White-label: nilai tenant dari `--dart-define-from-file=tenants/<slug>/config.json`
+// (Flutter meneruskannya ke Gradle sebagai `dart-defines`, base64 per entri).
+val dartDefines: Map<String, String> =
+    (project.findProperty("dart-defines") as String?)
+        ?.split(",")
+        ?.map { String(Base64.getDecoder().decode(it)).split("=", limit = 2) }
+        ?.filter { it.size == 2 }
+        ?.associate { it[0] to it[1] }
+        ?: emptyMap()
+
+val isReleaseBuild = gradle.startParameter.taskNames.any { it.contains("Release") }
+if (isReleaseBuild && dartDefines["APP_ID"].isNullOrBlank()) {
+    throw GradleException(
+        "Build rilis wajib --dart-define-from-file=tenants/<slug>/config.json (APP_ID kosong).",
+    )
+}
+
+// Upload key per tenant dari env (CI: GitHub Environment per tenant).
+val keystorePath: String? = System.getenv("ANDROID_KEYSTORE_PATH")
+
 android {
     namespace = "id.santri360.santri360"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+    buildFeatures {
+        resValues = true // label app per tenant via resValue
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -15,8 +41,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "id.santri360.santri360"
+        applicationId = dartDefines["APP_ID"] ?: "id.santri360.santri360"
+        resValue("string", "app_name", dartDefines["APP_NAME"] ?: "Santri360")
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -29,11 +55,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Tanpa keystore (lokal) jatuh ke debug key; CI rilis memaksa keystore ada.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 }
